@@ -23,7 +23,7 @@ func main() {
 	if conf.ApiEnabled {
 		apiHandler := web.New()
 		goji.Handle("/api/*", apiHandler)
-		api.Attach(apiHandler, APP_VERSION, conf)
+		api.Attach(apiHandler, conf)
 	}
 
 	goji.Get("/*", static(*staticPath))
