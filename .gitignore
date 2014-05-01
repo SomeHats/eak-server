@@ -1,0 +1,3 @@
+*.sublime-*
+conf.dev.json
+conf.production.json
