@@ -32,21 +32,34 @@ func getCurrentUserHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 func getCurrentUser(r *http.Request) (User, error) {
 	// TODO: use a query that selects the user on some proper metric rather than a default id:
 	st := time.Now()
-	rows, err := queries.getAndUpdateUser.Query(defaultUser)
+	rows, err := queries.getUser.Query(defaultUser)
 	defer rows.Close()
 	if err != nil {
 		return User{}, err
 	}
-	log.Println("Got & updated user in", time.Since(st))
+	log.Println("Got user in", time.Since(st))
 
 	for rows.Next() {
 		var user User
 		if err := rows.Scan(&user.Id, &user.State, &user.Created, &user.Seen); err != nil {
 			return user, err
 		} else {
+			// Checkin the user, but don't block the request to do so:
+			go checkinUser(user.Id)
+
 			return user, nil
 		}
 	}
 
 	return User{}, fmt.Errorf("Could not find current user :(")
+}
+
+func checkinUser(id int) {
+	st := time.Now()
+	_, err := queries.updateUser.Exec(id)
+	if err != nil {
+		log.Printf("[non-blocking] Failed to update user %d: %v", id, err)
+	} else {
+		log.Printf("[non-blocking] Updated user %d in %v", id, time.Since(st))
+	}
 }

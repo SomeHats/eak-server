@@ -6,23 +6,33 @@ import (
 )
 
 var queries struct {
-	getAndUpdateUser *sql.Stmt
-	createEvent      *sql.Stmt
-	getEvent         *sql.Stmt
-	checkin          *sql.Stmt
+	getUser     *sql.Stmt
+	updateUser  *sql.Stmt
+	createEvent *sql.Stmt
+	getEvent    *sql.Stmt
+	checkin     *sql.Stmt
 }
 
 func prepareQueries() {
 	q, err := db.Prepare(`
-		UPDATE users
-		SET last_seen = NOW()
+		SELECT id, state, created, last_seen
+		FROM users
 		WHERE id = $1
-		RETURNING id, state, created, last_seen
 	`)
 	if err != nil {
 		log.Fatal(err)
 	}
-	queries.getAndUpdateUser = q
+	queries.getUser = q
+
+	q, err = db.Prepare(`
+		UPDATE users
+		SET last_seen = NOW()
+		WHERE id = $1
+	`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	queries.updateUser = q
 
 	q, err = db.Prepare(`
 		INSERT INTO events (user_id, parent_id, type, version, start_time, duration, event_data)
