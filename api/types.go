@@ -7,6 +7,10 @@ import (
 type Config struct {
 	ApiEnabled bool `json:"api"`
 	Postgres   PgConfig
+	Session    struct {
+		Authentication string
+		Encryption     string
+	}
 }
 
 type PgConfig struct {

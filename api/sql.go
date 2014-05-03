@@ -6,11 +6,12 @@ import (
 )
 
 var queries struct {
-	getUser     *sql.Stmt
-	updateUser  *sql.Stmt
-	createEvent *sql.Stmt
-	getEvent    *sql.Stmt
-	checkin     *sql.Stmt
+	getUser            *sql.Stmt
+	updateUser         *sql.Stmt
+	createImplicitUser *sql.Stmt
+	createEvent        *sql.Stmt
+	getEvent           *sql.Stmt
+	checkin            *sql.Stmt
 }
 
 func prepareQueries() {
@@ -33,6 +34,16 @@ func prepareQueries() {
 		log.Fatal(err)
 	}
 	queries.updateUser = q
+
+	q, err = db.Prepare(`
+		INSERT INTO users (state, created, last_seen)
+		VALUES ('implicit', NOW(), NOW())
+		RETURNING id, state, created, last_seen
+	`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	queries.createImplicitUser = q
 
 	q, err = db.Prepare(`
 		INSERT INTO events (user_id, parent_id, type, version, start_time, duration, event_data)

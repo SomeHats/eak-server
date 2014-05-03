@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,9 +10,11 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
+const year = 60 * 60 * 24 * 365
+
 func currentUserMiddleware(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		user, err := getCurrentUser(r)
+		user, err := getCurrentUser(r, w)
 		if err != nil {
 			log.Println("[currentUserMiddleware] Error: ", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -29,15 +32,33 @@ func getCurrentUserHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	sendJSON(w, c.Env["user"])
 }
 
-func getCurrentUser(r *http.Request) (User, error) {
-	// TODO: use a query that selects the user on some proper metric rather than a default id:
-	st := time.Now()
-	rows, err := queries.getUser.Query(defaultUser)
-	defer rows.Close()
+func getCurrentUser(r *http.Request, w http.ResponseWriter) (User, error) {
+	session, err := store.Get(r, "eak-session")
 	if err != nil {
 		return User{}, err
 	}
-	log.Println("Got user in", time.Since(st))
+
+	var rows *sql.Rows
+
+	session.Options.MaxAge = year
+	id, ok := session.Values["user-id"]
+	if ok {
+		st := time.Now()
+		rows, err = queries.getUser.Query(id)
+		defer rows.Close()
+		if err != nil {
+			return User{}, err
+		}
+		log.Println("Got user in", time.Since(st))
+	} else {
+		st := time.Now()
+		rows, err = queries.createImplicitUser.Query()
+		defer rows.Close()
+		if err != nil {
+			return User{}, err
+		}
+		log.Println("Created user in", time.Since(st))
+	}
 
 	for rows.Next() {
 		var user User
@@ -46,6 +67,13 @@ func getCurrentUser(r *http.Request) (User, error) {
 		} else {
 			// Checkin the user, but don't block the request to do so:
 			go checkinUser(user.Id)
+
+			// Save session:
+			session.Values["user-id"] = user.Id
+			err := session.Save(r, w)
+			if err != nil {
+				return User{}, err
+			}
 
 			return user, nil
 		}

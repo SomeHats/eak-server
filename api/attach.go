@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
 	"github.com/zenazn/goji/web"
 )
 
 var db *sql.DB
 var defaultUser int
+var store *sessions.CookieStore
 
 func Attach(app *web.Mux, conf Config) {
 	log.Println("Connecting to Postgres...")
@@ -18,6 +20,10 @@ func Attach(app *web.Mux, conf Config) {
 	prepareQueries()
 	getOrCreateDefaultUser()
 	log.Println("Connected")
+
+	store = sessions.NewCookieStore(
+		[]byte(conf.Session.Authentication),
+		[]byte(conf.Session.Encryption))
 
 	app.Use(currentUserMiddleware)
 
