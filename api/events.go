@@ -89,7 +89,7 @@ func postCheckinHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dt := time.Since(event.Start.Add(time.Duration(event.Duration) * time.Second)).Seconds()
+	dt := time.Since(event.Start.Add(time.Duration(event.Duration * float64(time.Second)))).Seconds()
 	if dt > maxCheckinInterval {
 		eStr := fmt.Sprintf("Cannot checkin after %fs of event inactivity (%fs)",
 			maxCheckinInterval, dt)
