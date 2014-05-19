@@ -11,5 +11,9 @@
   "session": {
     "authentication": "blah",
     "encryption": "bleh"
+  },
+  "static": {
+    "/": "../E.A.K./public",
+    "/glitterquiff/": "/Users/glitterquiff/web"
   }
 }

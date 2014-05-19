@@ -37,12 +37,13 @@ func getFile(dir http.FileSystem, name string) (http.File, os.FileInfo, error) {
 	}
 }
 
-func static(root string) func(http.ResponseWriter, *http.Request) {
+func static(root, prefix string) func(http.ResponseWriter, *http.Request) {
 	_, filename, _, _ := runtime.Caller(1)
 	dir := http.Dir(path.Join(path.Dir(filename), root))
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		f, d, err := getFile(dir, r.URL.String())
+		url := strings.TrimPrefix(r.URL.String(), prefix)
+		f, d, err := getFile(dir, url)
 		if err != nil {
 			NotFound(w, r)
 			return

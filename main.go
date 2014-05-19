@@ -12,9 +12,6 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
-var staticPath = flag.String("static", "../E.A.K/public",
-	"The location of the static assets to serve")
-
 func main() {
 	flag.Parse()
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -26,7 +23,9 @@ func main() {
 		api.Attach(apiHandler, conf)
 	}
 
-	goji.Get("/*", static(*staticPath))
+	for url, path := range conf.Static {
+		goji.Get(url+"*", static(path, url))
+	}
 
 	goji.Serve()
 	log.Println("Finished")

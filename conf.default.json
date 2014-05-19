@@ -1,3 +1,6 @@
 {
-  "api": false
+  "api": false,
+  "static": {
+    "/": "../E.A.K./public"
+  }
 }
