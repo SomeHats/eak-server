@@ -7,7 +7,9 @@ import (
 
 var queries struct {
 	getUser            *sql.Stmt
+	getUserByEmail     *sql.Stmt
 	updateUser         *sql.Stmt
+	updateUserEmail    *sql.Stmt
 	createImplicitUser *sql.Stmt
 	createEvent        *sql.Stmt
 	getEvent           *sql.Stmt
@@ -16,7 +18,7 @@ var queries struct {
 
 func prepareQueries() {
 	q, err := db.Prepare(`
-		SELECT id, state, created, last_seen
+		SELECT id, state, email, created, last_seen
 		FROM users
 		WHERE id = $1
 	`)
@@ -24,6 +26,16 @@ func prepareQueries() {
 		log.Fatal(err)
 	}
 	queries.getUser = q
+
+	q, err = db.Prepare(`
+		SELECT id, state, email, created, last_seen
+		FROM users
+		WHERE email = $1
+	`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	queries.getUserByEmail = q
 
 	q, err = db.Prepare(`
 		UPDATE users
@@ -36,9 +48,19 @@ func prepareQueries() {
 	queries.updateUser = q
 
 	q, err = db.Prepare(`
+		UPDATE users
+		SET email = $2
+		WHERE id = $1
+	`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	queries.updateUserEmail = q
+
+	q, err = db.Prepare(`
 		INSERT INTO users (state, created, last_seen)
 		VALUES ('implicit', NOW(), NOW())
-		RETURNING id, state, created, last_seen
+		RETURNING id, state, email, created, last_seen
 	`)
 	if err != nil {
 		log.Fatal(err)

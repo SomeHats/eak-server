@@ -28,6 +28,7 @@ func Attach(app *web.Mux, conf Config) {
 	app.Use(currentUserMiddleware)
 
 	app.Get("/api/users/me", getCurrentUserHandler)
+	app.Post("/api/users/me/persona", personaLoginHandler)
 	app.Post("/api/events", postEventHandler)
 	app.Get("/api/events/:id", getEventHandler)
 	app.Post("/api/events/:id/checkin", postCheckinHandler)

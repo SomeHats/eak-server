@@ -26,6 +26,7 @@ type PgConfig struct {
 type User struct {
 	Id      int       `json:"id"`
 	State   string    `json:"state"`
+	Email   string    `json:"email"`
 	Created time.Time `json:"created"`
 	Seen    time.Time `json:"lastSeen"`
 }

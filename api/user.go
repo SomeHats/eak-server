@@ -28,6 +28,15 @@ func currentUserMiddleware(c *web.C, h http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
+func getEnvUser(env map[string]interface{}) User {
+	user, ok := env["user"].(User)
+	if ok {
+		return user
+	} else {
+		return User{}
+	}
+}
+
 func getCurrentUserHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	sendJSON(w, c.Env["user"])
 }
@@ -37,10 +46,10 @@ func getCurrentUser(r *http.Request, w http.ResponseWriter) (User, error) {
 	if err != nil {
 		return User{}, err
 	}
+	session.Options.MaxAge = year
 
 	var rows *sql.Rows
 
-	session.Options.MaxAge = year
 	id, ok := session.Values["user-id"]
 	if ok {
 		st := time.Now()
@@ -60,26 +69,42 @@ func getCurrentUser(r *http.Request, w http.ResponseWriter) (User, error) {
 		log.Println("Created user in", time.Since(st))
 	}
 
-	for rows.Next() {
-		var user User
-		if err := rows.Scan(&user.Id, &user.State, &user.Created, &user.Seen); err != nil {
-			return user, err
-		} else {
-			// Checkin the user, but don't block the request to do so:
-			go checkinUser(user.Id)
+	userPtr, err := scanUser(rows)
+	if err != nil {
+		return User{}, err
+	}
+	if userPtr == nil {
+		return User{}, fmt.Errorf("Could not find current user :(")
+	}
+	user := *userPtr
 
-			// Save session:
-			session.Values["user-id"] = user.Id
-			err := session.Save(r, w)
-			if err != nil {
-				return User{}, err
-			}
+	// Checkin the user, but don't block the request to do so:
+	go checkinUser(user.Id)
 
-			return user, nil
-		}
+	// Save session:
+	session.Values["user-id"] = user.Id
+	err = session.Save(r, w)
+	if err != nil {
+		return User{}, err
 	}
 
-	return User{}, fmt.Errorf("Could not find current user :(")
+	return user, nil
+}
+
+func scanUser(rows *sql.Rows) (*User, error) {
+	user := User{}
+	email := sql.NullString{}
+	for rows.Next() {
+		err := rows.Scan(&user.Id, &user.State, &email, &user.Created, &user.Seen)
+		if err != nil {
+			return nil, err
+		}
+
+		user.Email = email.String
+		return &user, nil
+	}
+
+	return nil, nil
 }
 
 func checkinUser(id int) {
