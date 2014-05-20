@@ -24,7 +24,7 @@ func personaLoginHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	audience := r.Header.Get("Origin")
+	audience := r.Header.Get("x-origin")
 	if !isAllowedAudience(audience) {
 		http.Error(w, "Audience not allowed: "+audience, http.StatusBadRequest)
 		return
