@@ -105,7 +105,7 @@ func postCheckinHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	log.Println("Updated duration (checkin) for event in", time.Since(st))
+	log.Println("[sql] Updated duration (checkin) for event in", time.Since(st))
 
 	sendJSON(w, newEvent)
 }
@@ -123,7 +123,7 @@ func GetEvent(id int64) (Event, error, bool) {
 		if err != nil {
 			return event, err, true
 		}
-		log.Println("Got event in", time.Since(st))
+		log.Println("[sql] Got event in", time.Since(st))
 		return event, err, false
 	}
 
@@ -171,7 +171,7 @@ func CreateEvent(event Event) (Event, error) {
 		event.Version,
 		string(dataBytes),
 	)
-	defer log.Println("Created event in", time.Since(st))
+	defer log.Println("[sql] Created event in", time.Since(st))
 
 	return readEvent(row)
 }

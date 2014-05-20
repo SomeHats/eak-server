@@ -2,8 +2,10 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/zenazn/goji/web"
 )
@@ -26,6 +28,7 @@ func getEventSumHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		WHERE type IN (%s)
 		GROUP BY type`, strings.Join(types, ","))
 
+	st := time.Now()
 	rows, err := db.Query(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -44,6 +47,7 @@ func getEventSumHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 
 		result[k] = v
 	}
+	log.Println("[sql] Got event aggregate stats in", time.Since(st))
 
 	sendJSON(w, result)
 }

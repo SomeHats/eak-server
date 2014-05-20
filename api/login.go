@@ -3,8 +3,10 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/zenazn/goji/web"
 )
@@ -64,6 +66,7 @@ func personaLogin(assertion, audience string) (string, error) {
 	v.Set("assertion", assertion)
 	v.Set("audience", audience)
 
+	st := time.Now()
 	res, err := http.PostForm("https://verifier.login.persona.org/verify", v)
 	if err != nil {
 		return "", err
@@ -78,6 +81,7 @@ func personaLogin(assertion, audience string) (string, error) {
 	if err := dcd.Decode(&response); err != nil {
 		return "", fmt.Errorf("Could not decode persona response JSON: %v", err)
 	}
+	log.Println("[http] Verified persona assertion in", time.Since(st))
 
 	if response.Status != "okay" {
 		return "", fmt.Errorf("Couldn't log you in: %#v", response)
@@ -87,6 +91,7 @@ func personaLogin(assertion, audience string) (string, error) {
 }
 
 func getOrAssociateUserByEmail(email string, currentUser User) (User, error) {
+	st := time.Now()
 	rows, err := queries.getUserByEmail.Query(email)
 	if err != nil {
 		return User{}, err
@@ -96,6 +101,7 @@ func getOrAssociateUserByEmail(email string, currentUser User) (User, error) {
 	if err != nil {
 		return User{}, err
 	}
+	log.Println("[sql] Tried to fetch user by email in", time.Since(st))
 
 	if user == nil {
 		if err := assocEmail(email, currentUser); err != nil {
@@ -110,7 +116,9 @@ func getOrAssociateUserByEmail(email string, currentUser User) (User, error) {
 }
 
 func assocEmail(email string, user User) error {
+	st := time.Now()
 	_, err := queries.updateUserEmail.Exec(user.Id, email)
+	log.Println("[sql] Updated user email in", time.Since(st))
 	if err != nil {
 		return err
 	} else {

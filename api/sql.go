@@ -49,7 +49,7 @@ func prepareQueries() {
 
 	q, err = db.Prepare(`
 		UPDATE users
-		SET email = $2
+		SET email = $2, state = 'active'
 		WHERE id = $1
 	`)
 	if err != nil {

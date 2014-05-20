@@ -54,19 +54,19 @@ func getCurrentUser(r *http.Request, w http.ResponseWriter) (User, error) {
 	if ok {
 		st := time.Now()
 		rows, err = queries.getUser.Query(id)
-		defer rows.Close()
 		if err != nil {
 			return User{}, err
 		}
-		log.Println("Got user in", time.Since(st))
+		defer rows.Close()
+		log.Println("[sql] Got user in", time.Since(st))
 	} else {
 		st := time.Now()
 		rows, err = queries.createImplicitUser.Query()
-		defer rows.Close()
 		if err != nil {
 			return User{}, err
 		}
-		log.Println("Created user in", time.Since(st))
+		defer rows.Close()
+		log.Println("[sql] Created user in", time.Since(st))
 	}
 
 	userPtr, err := scanUser(rows)
@@ -111,8 +111,8 @@ func checkinUser(id int) {
 	st := time.Now()
 	_, err := queries.updateUser.Exec(id)
 	if err != nil {
-		log.Printf("[non-blocking] Failed to update user %d: %v", id, err)
+		log.Printf("[sql] [non-blocking] Failed to update user %d: %v", id, err)
 	} else {
-		log.Printf("[non-blocking] Updated user %d in %v", id, time.Since(st))
+		log.Printf("[sql] [non-blocking] Updated user %d in %v", id, time.Since(st))
 	}
 }
