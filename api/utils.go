@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func sendJSON(w http.ResponseWriter, js interface{}) {
@@ -28,4 +29,28 @@ func parseReqJSON(r *http.Request, d interface{}) (error, int) {
 	}
 
 	return nil, http.StatusOK
+}
+
+func escape(str string, e int) string {
+	escaper := strings.Map(func(r rune) rune { return escMap[r] }, fmt.Sprintf("$%d$", e))
+
+	if strings.Contains(str, escaper) {
+		return escape(str, e+1)
+	} else {
+		return escaper + str + escaper
+	}
+}
+
+var escMap = map[rune]rune{
+	'0': 'a',
+	'1': 'b',
+	'2': 'c',
+	'3': 'd',
+	'4': 'e',
+	'5': 'f',
+	'6': 'g',
+	'7': 'h',
+	'8': 'i',
+	'9': 'j',
+	'$': '$',
 }

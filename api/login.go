@@ -91,6 +91,7 @@ func getOrAssociateUserByEmail(email string, currentUser User) (User, error) {
 	if err != nil {
 		return User{}, err
 	}
+	defer rows.Close()
 	user, err := scanUser(rows)
 	if err != nil {
 		return User{}, err
