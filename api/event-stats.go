@@ -87,7 +87,22 @@ func getEventSeriesHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("[sql] Got aggregate series stats in", time.Since(st))
 
+	ensureSeriesFilled(&result)
+
 	sendJSON(w, result)
+}
+
+// Feels inefficient... TODO: Make less inefficient!?
+func ensureSeriesFilled(series *map[string]map[string]int) {
+	for _, ser := range *series {
+		for date, _ := range ser {
+			for _, sser := range *series {
+				if _, ok := sser[date]; !ok {
+					sser[date] = 0
+				}
+			}
+		}
+	}
 }
 
 func getEscapedTypes(r *http.Request) []string {
