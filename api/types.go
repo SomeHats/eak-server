@@ -40,8 +40,9 @@ type Event struct {
 	Type     string                 `json:"type,omitempty"`
 	Version  string                 `json:"version,omitempty"`
 	Start    time.Time              `json:"startTime,omitempty"`
-	Duration float64                `json:"duration,omitempty"`
+	Duration float64                `json:"duration"`
 	Data     map[string]interface{} `json:"data,omitempty"`
+	Children []*Event               `json:"children,omitempty"`
 }
 
 type dbScanner interface {

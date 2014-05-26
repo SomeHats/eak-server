@@ -14,6 +14,7 @@ var queries struct {
 	createEvent        *sql.Stmt
 	getEvent           *sql.Stmt
 	checkin            *sql.Stmt
+	eventSession2Child *sql.Stmt
 }
 
 func prepareQueries() {
@@ -97,4 +98,27 @@ func prepareQueries() {
 		log.Fatal(err)
 	}
 	queries.checkin = q
+
+	q, err = db.Prepare(`
+		SELECT DISTINCT events.id, events.user_id, events.parent_id, events.type,
+			events.version, events.start_time, events.duration, '{}' AS event_data
+		FROM events, (
+			SELECT events.id
+			FROM events, (
+				SELECT id
+				FROM events
+				WHERE type = 'session'
+				ORDER BY id DESC
+				OFFSET $1
+				LIMIT $2
+			) AS tmp
+			WHERE events.id = tmp.id OR events.parent_id = tmp.id
+		) AS tmp
+		WHERE events.id = tmp.id OR events.parent_id = tmp.id
+		ORDER BY id
+	`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	queries.eventSession2Child = q
 }

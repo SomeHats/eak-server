@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -103,6 +104,53 @@ func ensureSeriesFilled(series *map[string]map[string]int) {
 			}
 		}
 	}
+}
+
+func getEventSessionsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	offset, err := strconv.ParseUint(q.Get("offset"), 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	limit, err := strconv.ParseUint(q.Get("limit"), 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	st := time.Now()
+	rows, err := queries.eventSession2Child.Query(offset, limit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	sessions := make([]*Event, 0, 100)
+	parents := make(map[int]*Event)
+
+	for rows.Next() {
+		event, err := readEvent(rows)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		event.Children = make([]*Event, 0, 10)
+
+		parents[event.Id] = &event
+		if event.Type == "session" {
+			sessions = append(sessions, &event)
+		}
+
+		if parent, ok := parents[event.ParentId]; ok {
+			parent.Children = append(parent.Children, &event)
+		}
+	}
+	log.Println("[sql] Got child and grandchild events from sessions in", time.Since(st))
+
+	sendJSON(w, sessions)
 }
 
 func getEscapedTypes(r *http.Request) []string {
