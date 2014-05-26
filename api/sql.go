@@ -40,7 +40,7 @@ func prepareQueries() {
 
 	q, err = db.Prepare(`
 		UPDATE users
-		SET last_seen = NOW()
+		SET last_seen = STATEMENT_TIMESTAMP()
 		WHERE id = $1
 	`)
 	if err != nil {
@@ -60,7 +60,7 @@ func prepareQueries() {
 
 	q, err = db.Prepare(`
 		INSERT INTO users (state, created, last_seen)
-		VALUES ('implicit', NOW(), NOW())
+		VALUES ('implicit', STATEMENT_TIMESTAMP(), STATEMENT_TIMESTAMP())
 		RETURNING id, state, email, created, last_seen
 	`)
 	if err != nil {
@@ -70,7 +70,7 @@ func prepareQueries() {
 
 	q, err = db.Prepare(`
 		INSERT INTO events (user_id, parent_id, type, version, start_time, duration, event_data)
-		VALUES ($1, $2, $3, $4, NOW(), NULL, $5)
+		VALUES ($1, $2, $3, $4, STATEMENT_TIMESTAMP(), NULL, $5)
 		RETURNING id, user_id, parent_id, type, version, start_time, duration, event_data
 	`)
 	if err != nil {

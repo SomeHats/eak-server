@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
@@ -13,11 +14,13 @@ import (
 var db *sql.DB
 var defaultUser int
 var store *sessions.CookieStore
+var offset time.Duration
 
 func Attach(app *web.Mux, conf Config) {
 	log.Println("Connecting to Postgres...")
 	db = connectPg(conf.Postgres)
 	prepareQueries()
+	pollTimeOffset()
 	getOrCreateDefaultUser()
 	log.Println("Connected")
 
@@ -103,4 +106,32 @@ func getOrCreateDefaultUser() {
 
 	log.Println("API default user id:", id)
 	defaultUser = id
+}
+
+func pollTimeOffset() {
+	q, err := db.Prepare("SELECT STATEMENT_TIMESTAMP()")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	poll := func() {
+		var t time.Time
+		if err := q.QueryRow().Scan(&t); err != nil {
+			log.Println("Couldn't get db time :(")
+			return
+		}
+
+		offs := time.Since(t)
+		offset = offs
+		log.Println("Database Time Offset:", offs)
+	}
+
+	setupPolling := func() {
+		for _ = range time.Tick(15 * time.Minute) {
+			poll()
+		}
+	}
+
+	poll()
+	go setupPolling()
 }
