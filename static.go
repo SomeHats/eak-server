@@ -42,7 +42,7 @@ func static(root, prefix string) func(http.ResponseWriter, *http.Request) {
 	dir := http.Dir(path.Join(path.Dir(filename), root))
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		url := strings.TrimPrefix(r.URL.String(), prefix)
+		url := strings.TrimPrefix(r.URL.Path, prefix)
 		f, d, err := getFile(dir, url)
 		if err != nil {
 			NotFound(w, r)
