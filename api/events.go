@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/zenazn/goji/web"
@@ -36,6 +37,49 @@ func postEventHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSON(w, newEv)
+}
+
+func eventQueryHandler(c web.C, w http.ResponseWriter, r *http.Request) {
+	log.Println("Event query handler")
+	if getEnvUser(c.Env).State != "admin" {
+		http.NotFound(w, r)
+		return
+	}
+
+	parentIds := strings.Split(r.URL.Query().Get("parentId"), ",")
+	for i, id := range parentIds {
+		v, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		parentIds[i] = strconv.FormatUint(v, 10)
+	}
+	parentIdQ := "(" + strings.Join(parentIds, ",") + ")"
+
+	q := fmt.Sprintf(`
+		SELECT id, user_id, parent_id, type, version, start_time, duration, event_data
+		FROM events
+		WHERE parent_id IN %s`, parentIdQ)
+	rows, err := db.Query(q)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	events := make([]Event, 0, 30)
+	for rows.Next() {
+		event, err := readEvent(rows)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		events = append(events, event)
+	}
+
+	sendJSON(w, events)
 }
 
 func getEventHandler(c web.C, w http.ResponseWriter, r *http.Request) {

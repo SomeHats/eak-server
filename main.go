@@ -34,7 +34,7 @@ func main() {
 }
 
 func NotFound(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "404 :(", http.StatusNotFound)
+	http.NotFound(w, r)
 }
 
 func redirects(redirs map[string]string) {

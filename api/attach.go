@@ -32,6 +32,7 @@ func Attach(app *web.Mux, conf Config) {
 
 	app.Get("/api/users/me", getCurrentUserHandler)
 	app.Post("/api/users/me/persona", personaLoginHandler)
+	app.Get("/api/events", eventQueryHandler)
 	app.Post("/api/events", postEventHandler)
 	app.Get("/api/events/sum", getEventSumHandler)
 	app.Get("/api/events/series", getEventSeriesHandler)

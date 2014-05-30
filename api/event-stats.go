@@ -107,6 +107,11 @@ func ensureSeriesFilled(series *map[string]map[string]int) {
 }
 
 func getEventSessionsHandler(c web.C, w http.ResponseWriter, r *http.Request) {
+	if getEnvUser(c.Env).State != "admin" {
+		http.NotFound(w, r)
+		return
+	}
+
 	q := r.URL.Query()
 	offset, err := strconv.ParseUint(q.Get("offset"), 10, 64)
 	if err != nil {
