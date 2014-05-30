@@ -8,6 +8,7 @@ type Config struct {
 	ApiEnabled bool `json:"api"`
 	Postgres   PgConfig
 	Static     map[string]string
+	Redirects  map[string]string
 	Session    struct {
 		Authentication string
 		Encryption     string

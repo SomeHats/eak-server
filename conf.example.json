@@ -15,5 +15,8 @@
   "static": {
     "/": "../E.A.K./public",
     "/glitterquiff/": "/Users/glitterquiff/web"
+  },
+  "redirects": {
+    "/glitterquiff": "/glitterquiff/"
   }
 }
