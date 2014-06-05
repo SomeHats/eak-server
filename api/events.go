@@ -60,7 +60,8 @@ func eventQueryHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 	q := fmt.Sprintf(`
 		SELECT id, user_id, parent_id, type, version, start_time, duration, event_data
 		FROM events
-		WHERE parent_id IN %s`, parentIdQ)
+		WHERE parent_id IN %s
+		GROUP BY id`, parentIdQ)
 	rows, err := db.Query(q)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
