@@ -13,10 +13,14 @@
     "encryption": "bleh"
   },
   "static": {
-    "/": "../E.A.K./public",
-    "/glitterquiff/": "/Users/glitterquiff/web"
+    "/admin/": "../admin",
+    "/": "../E.A.K./public"
   },
   "redirects": {
-    "/glitterquiff": "/glitterquiff/"
+    "/admin": "/admin/",
+    "/play": "/play/",
+    "/play.html": "/play/",
+    "/:lang/play": "/:lang/play/",
+    "/:lang/play.html": "/:lang/play/"
   }
 }

@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"strings"
 
 	"./api"
 
@@ -44,8 +45,13 @@ func redirects(redirs map[string]string) {
 }
 
 func addRedirect(from, to string) {
-	goji.Get(from, func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Location", to)
-		http.Error(w, "Redirected to "+to, http.StatusMovedPermanently)
+	goji.Get(from, func(c web.C, w http.ResponseWriter, r *http.Request) {
+		t := to
+		for key, val := range c.URLParams {
+			t = strings.Replace(t, ":"+key, val, -1)
+		}
+
+		w.Header().Set("Location", t)
+		http.Error(w, "Redirected to "+t, http.StatusMovedPermanently)
 	})
 }
